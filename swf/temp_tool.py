@@ -7,7 +7,7 @@ from sw_viewer_tools import read_R_Z
 g_draw = "2A"
 
 pi = math.pi
-digifaw_font_path = "/Users/lianke/Desktop/swf/input/digifaw.ttf"
+digifaw_font_path = "/Users/lianke/Desktop/StudyLog/swf/input/digifaw.ttf"
 
 R_Z = read_R_Z()
 
@@ -360,6 +360,7 @@ def screen_draw_psi_fig(ax1,gfile_data,struct,lab):
         ax1.text(1.8,-2.6,lab,fontsize=8,color='black')
 
     return c_list
+
 # 绘制五个曲线图
 def screen_draw_prof(ax2,ax3,ax4,ax5,ax6,json_data,max_json_data,afile_data_list,max_afile_data_list,time_list,max_time_list,shot,time,is_defa):
     # 曲线颜色
@@ -630,7 +631,7 @@ set_color(fig,c_border,c_tick,c_bg)
 
 
 if __name__ == "__main__":
-    gfile_data = read_g("/Users/lianke/Desktop/swf/036000/00310/g036000.00310")
+    gfile_data = read_g("/Users/lianke/Desktop/StudyLog/swf/036000/00310/g036000.00310")
     if g_draw=="2A":
         screen_Draw_2A_stru_bg(ax1)
     else:

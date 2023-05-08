@@ -5,7 +5,6 @@ import json
 import os
 import numpy as np
 import math
-import imas
 import getpass
 import glob
 from scipy.fft import fft, fftshift, fftfreq
@@ -89,6 +88,157 @@ def screen_Draw_2M_stru_bg(ax1,R_Z={}):
     ax1.set_ylabel('Z(m)',font=Path(tnr_font_path), fontsize=font_size-2,color="white")
     
     return ax1
+
+# 绘制2A装置图
+def screen_Draw_2A_stru_bg(ax1):
+    # 线条透明度
+    alpha = 0.9
+    # y轴label的字体大小
+    font_size = 18
+    # xy轴刻度值的字体大小
+    tick_size = 12
+
+    ## 真空室 VV ##
+    X1=[1.070 ,1.840 ,2.310 ,2.310, 1.840, 1.070, 1.070]
+    X2=[1.095, 1.815, 2.270 ,2.270 ,1.815,1.095 ,1.095]
+    Y1=[1.215, 1.215 ,0.436 ,-0.436, -1.215, -1.215 ,1.215]
+    Y2=[1.185 ,1.185 ,0.430, -0.430 ,-1.185, -1.185 ,1.185]
+    ax1.plot(X1,Y1,'lime',X2,Y2,'lime')
+    ## 欧姆线圈 E ##
+    def rect_E(r,z,w,h):
+        r1=r-w/2
+        r2=r+w/2
+        z1=z-h/2
+        z2=z+h/2
+        R=[r1,r2,r2,r1,r1,r2,r1,r2]
+        Z=[z1,z1,z2,z2,z1,z2,z2,z1]
+        ax1.plot(R,Z,'violet')
+
+    r=[0.905, 0.905, 0.905, 0.905, 0.905, 0.905, 0.9745, 1.087, 1.208, 1.725, 2.049, 2.475,
+       0.905, 0.905, 0.905, 0.905, 0.905, 0.905, 0.9745, 1.087, 1.208, 1.725, 2.049, 2.475]
+    z=[.100,  .286,  .472,  .658,  .844,  1.030,  1.236,  1.359,  1.411,  1.398,  1.172,  .3888,
+      -.100, -.286, -.472, -.658, -.844, -1.030, -1.236, -1.359, -1.411, -1.398, -1.172, -.3888]
+    w=[0.058, 0.058, 0.058, 0.058, 0.058, 0.058, 0.062, 0.062, 0.062, 0.066, 0.066, 0.066,
+       0.058, 0.058, 0.058, 0.058, 0.058, 0.058, 0.062, 0.062, 0.062, 0.066, 0.066, 0.066]
+    h=[0.145, 0.145, 0.145, 0.145, 0.145, 0.145, 0.158, 0.135, 0.112, 0.059, 0.059, 0.036,
+       0.145, 0.145, 0.145, 0.145, 0.145, 0.145, 0.158, 0.135, 0.112, 0.059, 0.059, 0.036]
+
+    for i in range(len(r)):
+        rect_E(r[i],z[i],w[i],h[i])
+    ## 极向场线圈  ##
+    def rect_E1(r,z,w,h):
+        r1=r-w/2
+        r2=r+w/2
+        z1=z-h/2
+        z2=z+h/2
+        if r in [1.355, 1.5165, 1.727]:
+            r,x,y = calculate_circle_rxy(r1,r2,z1,z2)
+            pint(r,x,y,ax1)
+            ax1.plot([r1,r2],[z2,z1],'c',[r2,r1],[z2,z1],'c')
+            return
+        R=[r1,r2,r2,r1,r1,r2,r1,r2]
+        Z=[z1,z1,z2,z2,z1,z2,z2,z1]
+        
+        
+        ax1.plot(R,Z,'c')
+    r=[1.008, 1.008, 1.008, 1.008, 1.9866, 2.345, 2.438, 2.460,
+       1.008, 1.008, 1.008, 1.008, 1.9866, 2.345, 2.438, 2.460,
+       1.008, 1.825, 2.284, 2.3841,
+       1.355, 1.5165, 1.727,
+       1.355, 1.5165, 1.727,
+       1.006, 2.380,
+       1.006, 2.380]
+
+    z=[ .055,  .340,   .450,  .560,  1.210,  .776,  .563,  .325,
+       -.055, -.340,  -.450, -.560, -1.210, -.776, -.563, -.325,
+       -.165, -1.312, -.745, -.371,
+       -.498, -.6753, -.560,
+    .498,  .6753,  .560,
+        .800, .537,
+       -.800, -.537]
+
+    w=[0.028, 0.028, 0.028, 0.028, 0.028, 0.028, 0.028, 0.079,
+       0.028, 0.028, 0.028, 0.028, 0.028, 0.028, 0.028, 0.079,
+       0.028, 0.028, 0.028, .079,
+        .0919, .1237, .0919,
+    .0919, .1237, .0919,
+        .026, .020,
+        .026, .020]
+
+    h=[0.079, 0.079, 0.079, 0.079, 0.079, 0.079, 0.079, 0.028,
+       0.079, 0.079, 0.079, 0.079, 0.079, 0.079, 0.079, 0.028,
+       0.079, 0.079, 0.079, 0.028,
+       .0919, .1237, .0919,
+       .0919, .1237, .0919,
+       .056, .025,
+       .056, .025]
+    for i in range(len(r)):
+        rect_E1(r[i],z[i],w[i],h[i])
+
+    ##偏滤器线圈挡板##
+    Xc=[1.355,1.500,1.5165,1.5165,1.727,1.53]
+    Yc=[0.498,0.735,0.6753,0.6753,0.56,0.745]
+    Rc=[0.085,0.177,0.1175,0.1175,0.085,0.185]
+
+    PX1=[1.2,1.36]
+    PY1=[0.33,0.33]
+    Phi=np.linspace(-pi/4,pi/4,10)
+    for num in Phi:
+        PX1.append(Xc[0]+Rc[0]*math.cos(num))
+        PY1.append(Yc[0]+Rc[0]*math.sin(num))
+    Phi=np.linspace(5*pi/4,3*pi/4,10)
+    for num in Phi:
+        PX1.append(Xc[1]+Rc[1]*math.cos(num))
+        PY1.append(Yc[1]+Rc[1]*math.sin(num))
+    ax1.plot(PX1,PY1,'orange')  #上偏滤器左挡板
+    ax1.plot(PX1,[i*(-1) for i in PY1],'orange')  #下偏滤器左挡板
+
+    PX2=[1.4,1.4]
+    PY2=[0.96,0.96]
+    Phi=np.linspace(pi,5*pi/4,10)
+    for num in Phi:
+        PX2.append(Xc[2]+Rc[2]*math.cos(num))
+        PY2.append(Yc[2]+Rc[2]*math.sin(num))
+
+    PX2.append(1.4915),PX2.append(1.4915)
+    PY2.append(0.5203),PY2.append(0.5203)
+    Phi=np.linspace(-pi/4,0,10)
+    for num in Phi:
+        PX2.append(Xc[3]+Rc[3]*math.cos(num))
+        PY2.append(Yc[3]+Rc[3]*math.sin(num))
+    PX2.append(1.6335),PX2.append(1.6335)
+    PY2.append(0.96),PY2.append(0.96)
+
+    
+    ax1.plot(PX2,PY2,'orange')  #上偏滤器中挡板
+    ax1.plot(PX2,[i*(-1) for i in PY2],'orange')  #下偏滤器中挡板
+
+    PX3=[1.862,1.75]
+    PY3=[0.416,0.416]
+    Phi=np.linspace(5*pi/4,3*pi/4,10)
+    for num in Phi:
+        PX3.append(Xc[4]+Rc[4]*math.cos(num))
+        PY3.append(Yc[4]+Rc[4]*math.sin(num))
+    Phi=np.linspace(-pi/4,pi/4,10)
+    for num in Phi:
+        PX3.append(Xc[5]+Rc[5]*math.cos(num))
+        PY3.append(Yc[5]+Rc[5]*math.sin(num))
+    ax1.plot(PX3,PY3,'orange')  #上偏滤器右挡板
+    ax1.plot(PX3,[i*(-1) for i in PY3],'orange')  #下偏滤器右挡板
+
+    r,x,y = calculate_circle_rxy(1.3095,1.40095,0.45205,0.54395)
+    pint(r,x,y,ax1)
+    r,x,y = calculate_circle_rxy(1.45465, 1.57835,0.61345, 0.73715)
+    pint(r,x,y,ax1)
+
+    ax1.set_yticklabels([-1.5,-1.5,-1.0,-0.5,0.0,0.5,1.0,1.5],fontsize=tick_size)
+    ax1.set_xticklabels([1.0,1.0,1.5,2.0,2.5],fontsize=tick_size)
+    ax1.set_xlabel('R(m)',font=Path(tnr_font_path), fontsize=font_size-2,color="white")
+    ax1.set_ylabel('Z(m)',font=Path(tnr_font_path), fontsize=font_size-2,color="white")
+    
+    return ax1
+
+
 # sw_screen_tools.py
 # 绘制装置图，包括cs线圈，pf线圈
 def screen_Draw_2M_stru_color_block(ax1,color_list=[]):
@@ -284,26 +434,6 @@ def screen_draw_psi_fig(ax1,gfile_data,struct,lab):
     c_list.append(c)
     c = ax1.contour(GridR, GridZ, psirzp,[1], colors='red', linewidths=0.8)# 分割
     c_list.append(c)
-
-    v = B.collections[0].get_paths()[0].vertices 
-    # 列坐标 列表
-    xlist = v[:,0] 
-    # 行坐标 列表
-    ylist = v[:,1]
-    
-    y1=scal_x(xlist,ylist,1.396) # 1.396
-    y2=scal_x(xlist,ylist,1.635) # 1.635
-
-    if struct=='2A':
-        ax1.text(1.7,1.5,lab,fontsize=8,color='black')
-    if (y1!=0) & (y2!=0):
-            ax1.scatter([1.396,1.635],[y1,y2],s=15,c='black',marker='x')
-            lab_I='I_strike('+str(1.396)+','+'%.3f'%y1+')'
-            lab_O='O_strike('+str(1.635)+','+'%.3f'%y2+')'
-            ax1.text(1.9,-1.45,lab_I,fontsize=6,color='black')
-            ax1.text(1.9,-1.55,lab_O,fontsize=6,color='black')
-    elif struct=='2M':
-        ax1.text(1.8,-2.6,lab,fontsize=8,color='black')
 
     return c_list
 
@@ -525,6 +655,23 @@ def screen_draw_prof(ax2,ax3,ax4,ax5,ax6,limit_data,data,shot,time,is_defa):
 
 #--------------------------绘图工具函数--------------------------------
 
+# 计算圆的x y r 用于绘制2A的装置图
+def calculate_circle_rxy(r1,r2,z1,z2):
+    x = (r1+r2)/2
+    y = (z1+z2)/2
+    r = (np.sqrt(np.power((r2-r1),2)+np.power((z2-z1),2)))/2.0
+    return r,x,y
+
+# 根据x y r绘制圆
+def pint(r,a,b,ax):
+    
+    #画圆
+    x = np.linspace(a-r,a+r,1000) #点的范围
+    y1 = np.sqrt(np.abs(np.power(r,2)-np.power((x-a),2))) + b #上半个圆的方程
+    y2 = -1*np.sqrt(np.abs(np.power(r,2)-np.power((x-a),2))) + b #上半个圆的方程
+    ax.plot(x,y1,x,y2,color='c',linestyle='-') #画圆
+
+
 # sw_screen_tools.py
 # 读取装置数据
 def read_R_Z():
@@ -644,147 +791,6 @@ class NpEncoder(json.JSONEncoder):
         else:
             return super(NpEncoder, self).default(obj)
 
-# sw_screen_tools.py
-# IMAS路径解析
-class IMASPathParser:
-    def __init__(self,user) -> None:
-         # 之前的用户名列表
-        presentUserNameList = []
-
-        self.dic = {}
-        # 获取 本机 用户名
-        username = getpass.getuser()
-
-        # 获取本机用户名的路径
-        userPath = os.path.abspath(os.path.join(
-                        os.path.dirname(__file__), os.environ['HOME'], '..'))
-        userPath = userPath + "/" + username
-
-
-        if os.path.exists(userPath) is False or \
-                            username in presentUserNameList:
-                        print("user path does not exist")
-        # 用户列表            
-        presentUserNameList.append(username)
-    
-
-        # IMASDB路径
-        imasdbPath = userPath + "/public/imasdb"
-     
-
-        # 数据库列表
-        databaseList = [dI for dI in os.listdir(imasdbPath)
-                                    if os.path.isdir(os.path.join(imasdbPath, dI))]
-        databaseList.sort()
-
-        # self.db_dic["db"] = databaseList
-
-
-        for db in databaseList:
-            # 0-9 对应炮号 
-            # 0-9999 在0目录，10000-19999在1目录下，20000-29999在2目录下，依次类推到9目录
-            shot_dic = {}
-            for d in range(10):  
-                
-                # /3/ 是 IMAS的版本号
-                # 炮号的路径
-                shotRunPath = imasdbPath + "/" + db + "/3/" + str(d)
-                if os.path.exists(shotRunPath) is False:
-                    continue
-                
-                # shotList 不能重复
-                shotList = []
-                run_list = []
-
-                # 获取以 .datafile 结尾的文件数量
-                dataFileCounter = len(glob.glob1(shotRunPath, "*.datafile"))
-                dataFileList = [""]*dataFileCounter
-
-                # 将以 .datafile 结尾的文件加入dataFileList
-                i = 0
-                for f in os.listdir(shotRunPath):
-                    if f.endswith(".datafile"):
-                        dataFileList[i] = f
-                        i += 1
-
-                # 必须 排序 之后会有位置的对应关系
-                dataFileList.sort()
-                counter = -1
-                for i in range(len(dataFileList)):
-                    # 提取 shot 和 run_number
-                    # 提取规则： 最后四位是run_number 剩下的是shot
-                    rs = dataFileList[i].split(".")[0] # ids_1210001
-                    rs = rs.split("_")[1] # 1210001
-                    try:
-                        if d == 0:
-                            run = int(rs[-4:])# 0001 -> 1
-                        else:
-                            run = int(str(d)+rs[-4:])
-                    except:
-                        # In case non-valid .datafile name is found
-                        # e.g. 'ids_model.datafile', skip this file
-                        continue
-                    run = str(run)
-                    shot = rs[:-4] # 121
-
-                    if shot not in shotList:
-                        shotList.append(shot)
-                        run_list.append([])
-                        counter += 1
-                    run_list[counter].append(run)
-            
-                for index,shot in enumerate(shotList):
-                    shot_dic[shot] = run_list[index]
-                
-            
-            self.dic[str(db)] = shot_dic
-       
-    # 获取当前用户下的 所有数据库           
-    def get_db(self):
-        return self.dic.keys()
-
-    # 获取当前数据库下的 所有shot
-    def get_shot(self,db):
-        return self.dic[str(db)].keys()
-    
-    # 获取当前 shot 下的 所有 time
-    def get_run_number_list(self,db,shot):
-        return self.dic[str(db)][str(shot)]
-    
-    # 获取所有时间片
-    def get_time_list(self,user,database,shot,run,mod):
-        #得到一个Data Entry的句柄
-        data_entry = imas.DBEntry(imas.imasdef.MDSPLUS_BACKEND,database,int(shot),int(run),user)
-        data_entry.open() #打开Data Entry
-
-        #获取所有时间片 
-        if mod == "equilibrium":
-            equilibrium = data_entry.get(mod)
-            return equilibrium.time
-        elif mod == "core_profiles":
-            core_profiles = data_entry.get(mod)
-            return core_profiles.time
-        elif mod == "mhd_linear":
-            mhd_linear = data_entry.get(mod)
-            return mhd_linear.time
-        
-        data_entry.close()
-        
-    def get_afile_data(self,user,database,shot,run,mod,time):
-        afile_data = {}
-         #得到一个Data Entry的句柄
-        data_entry = imas.DBEntry(imas.imasdef.MDSPLUS_BACKEND,database,int(shot),int(run),user)
-        data_entry.open() #打开Data Entry
-
-        #获取所有时间片 
-        equilibrium = data_entry.get(mod)
-        
-        
-        
-        return afile_data
-        
-    def get_all(self):
-        return self.dic
 
 # sw_screen_tools.py
 # json解析

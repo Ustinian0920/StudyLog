@@ -1,17 +1,15 @@
-from flask import Flask, request,current_app,jsonify,send_file
-from flask_restful import Api, Resource
-from flask_jwt_extended import (
-    JWTManager, jwt_required, create_access_token,
-    get_jwt_identity,get_jwt,verify_jwt_in_request
-)
+
 from datetime import (timedelta, datetime)
 import json
 import os
+
 # from v1base import V1Response
-# from util import get_actors,get_sw_path_info
 # from util.sw_cmd import *
 # from util.tools import random_num_str
 # from util.sw_path import *
+
+
+# from util import get_actors,get_sw_path_info
 import shutil
 import xml
 import xml.etree.ElementTree as ET
@@ -22,8 +20,9 @@ import math
 import matplotlib.pyplot as plt
 
 import imageio
+import mpld3
 from scipy import interpolate
-
+import imas
 from multiprocessing import Pool
 import sys
 import getpass
@@ -31,12 +30,12 @@ import glob
 import h5py
 from scipy.fft import fft, fftshift, fftfreq
 import pathlib
+from mpld3 import plugins
 from matplotlib import font_manager
-
 from pathlib import Path
 
 # 权限设置
-use_all_sudo = True 
+use_all_sudo = False 
 
 pi = math.pi
 # 颜色列表
@@ -117,8 +116,8 @@ def screen_Draw_2M_stru_bg(ax1,R_Z={}):
     ax1.fill(top_triangle_x,top_triangle_y,facecolor='#4d5456',zorder=3)
     ax1.set_yticklabels([-2,-2,-1,0,1,2],fontsize=tick_size)
     ax1.set_xticklabels([0.5,0.5,1.0,1.5,2.0,2.5,3.0],fontsize=tick_size)
-    ax1.set_xlabel('R(m)', fontsize=font_size-2,color="white")
-    ax1.set_ylabel('Z(m)', fontsize=font_size-2,color="white")
+    ax1.set_xlabel('R(m)',font=Path(tnr_font_path), fontsize=font_size-2,color="white")
+    ax1.set_ylabel('Z(m)',font=Path(tnr_font_path), fontsize=font_size-2,color="white")
     
     return ax1
 # 绘制装置图，包括cs线圈，pf线圈
@@ -309,7 +308,7 @@ def screen_draw_psi_fig(ax1,gfile_data,struct,lab):
     c_list.append(c)
     B = ax1.contour(GridR,GridZ,psirzp,[1],colors='#d82d2d',linewidths=1.5)# [1]
     c_list.append(B)
-    c = ax1.contour(GridR,GridZ,psirzp,np.linspace(1.1,5,contour_num*8),colors='#3dfffe',linewidths=0.8,alpha=0.6,zorder=1.1)# 1外围
+    c = ax1.contour(GridR,GridZ,psirzp,np.linspace(1.1,5,contour_num*4),colors='#3dfffe',linewidths=0.8,alpha=0.6,zorder=1.1)# 1外围
     c_list.append(c)
     c = ax1.contour(GridR, GridZ, psirzp,[1], colors='red', linewidths=0.8)# 分割
     c_list.append(c)
@@ -431,8 +430,8 @@ def screen_draw_prof(ax2,ax3,ax4,ax5,ax6,json_data,max_json_data,afile_data_list
     ax6.set_ylim(bottom_ylim-btw_ylim*0.05,top_ylim+btw_ylim*0.05)
     
     ax6.set_xlim(max_time_list[0],max_time_list[-1])
-    ax6.set_ylabel(ax6_lb,color="white",fontsize=font_size)
-    ax6.set_xlabel("Time(ms)",color="white",fontsize=font_size-2)
+    ax6.set_ylabel(ax6_lb,font=Path(tnr_font_path),color="white",fontsize=font_size)
+    ax6.set_xlabel("Time(ms)",font=Path(tnr_font_path),color="white",fontsize=font_size-2)
   
     # ax6.set_xticks(x_tick)
     # ax6.set_xticklabels(x_tick,fontsize=tick_size)
@@ -465,7 +464,7 @@ def screen_draw_prof(ax2,ax3,ax4,ax5,ax6,json_data,max_json_data,afile_data_list
     # x轴刻度值
     ax2.set_xlim(max_time_list[0],max_time_list[-1])
     # 设置y轴的label
-    ax2.set_ylabel(ax2_lb,color="white",fontsize=font_size-3)
+    ax2.set_ylabel(ax2_lb,font=Path(tnr_font_path),color="white",fontsize=font_size-3)
     # x轴刻度
     ax2.set_xticks(x_tick)
     # y轴刻度
@@ -522,11 +521,19 @@ def screen_draw_prof(ax2,ax3,ax4,ax5,ax6,json_data,max_json_data,afile_data_list
     ax3.set_xlim(max_time_list[0],max_time_list[-1])
     ax3.set_ylim(bottom_ylim-btw_ylim*0.05,top_ylim+btw_ylim*0.05)
     # ax3.set_ylim(bottom_ylim,top_ylim)
-    ax3.set_ylabel(ax3_lb,color="white",fontsize=font_size-2)
+    ax3.set_ylabel(ax3_lb,font=Path(tnr_font_path),color="white",fontsize=font_size-2)
     ax3.set_xticks(x_tick)
     ax3.set_xticklabels(x_tick,color="#000105")
+    #---------------临时添加-----------------------
+    y_tick = [150,175,200]
     ax3.set_yticks(y_tick)
-    y_tick = [float(f%(bottom_ylim/100)),float(f%(mid_ylim/100)),float(f%(top_ylim/100))]
+    # ---------------临时注释-----------------------
+    # y_tick = [float(f%(bottom_ylim/100)),float(f%(mid_ylim/100)),float(f%(top_ylim/100))]
+    #---------------临时添加-----------------------
+    y_tick = [float(f%(y_tick[0]/100)),float(f%(y_tick[1]/100)),float(f%(y_tick[2]/100))]
+    
+    
+    
     ax3.set_yticklabels(y_tick,fontsize=tick_size)
     ax3.grid(True,color="#00FFFB",linestyle='--',alpha=grid_alpha)
     
@@ -541,11 +548,19 @@ def screen_draw_prof(ax2,ax3,ax4,ax5,ax6,json_data,max_json_data,afile_data_list
     ax4.plot(time_list,y["r"],col,linewidth=line_width)
     ax4.set_ylim(bottom_ylim-btw_ylim*0.05,top_ylim+btw_ylim*0.05)
     ax4.set_xlim(max_time_list[0],max_time_list[-1])
-    ax4.set_ylabel(ax4_lb,color="white",fontsize=font_size-2)
+    ax4.set_ylabel(ax4_lb,font=Path(tnr_font_path),color="white",fontsize=font_size-2)
     ax4.set_xticks(x_tick)
     ax4.set_xticklabels(x_tick,color="#000105")
+    
+    #---------------临时添加-----------------------
+    y_tick = [40,57,75]
     ax4.set_yticks(y_tick)
-    y_tick = [float(f%(bottom_ylim/100)),float(f%(mid_ylim/100)),float(f%(top_ylim/100))]
+    # ---------------临时注释-----------------------
+    # y_tick = [float(f%(bottom_ylim/100)),float(f%(mid_ylim/100)),float(f%(top_ylim/100))]
+    #---------------临时添加-----------------------
+    y_tick = [float(f%(y_tick[0]/100)),float(f%(y_tick[1]/100)),float(f%(y_tick[2]/100))]
+    
+    
     ax4.set_yticklabels(y_tick,fontsize=tick_size)
     ax4.grid(True,color="#00FFFB",linestyle='--',alpha=grid_alpha)
    
@@ -560,7 +575,7 @@ def screen_draw_prof(ax2,ax3,ax4,ax5,ax6,json_data,max_json_data,afile_data_list
     ax5.plot(time_list,y["k"],col,linewidth=line_width)
     ax5.set_ylim(bottom_ylim-btw_ylim*0.05,top_ylim+btw_ylim*0.05)
     ax5.set_xlim(max_time_list[0],max_time_list[-1])
-    ax5.set_ylabel(ax5_lb,color="white",fontsize=font_size)
+    ax5.set_ylabel(ax5_lb,font=Path(tnr_font_path),color="white",fontsize=font_size)
     ax5.set_xticks(x_tick)
     ax5.set_xticklabels(x_tick,color="#000105")
     ax5.set_yticks(y_tick)
@@ -569,148 +584,8 @@ def screen_draw_prof(ax2,ax3,ax4,ax5,ax6,json_data,max_json_data,afile_data_list
     ax5.grid(True,color="#00FFFB",linestyle='--',alpha=grid_alpha)
     
     
-#--------------------------HL-2A大屏绘图--------------------------------
-
-def screen_Draw_2A_stru_bg(ax1):
-    # 线条透明度
-    alpha = 0.9
-    # y轴label的字体大小
-    font_size = 18
-    # xy轴刻度值的字体大小
-    tick_size = 12
 
 
-    fig = plt.figure(figsize=figsize)
-    fig.subplots_adjust(hspace=0.65,wspace=0.25)
-    ax1 = plt.subplot2grid((5,2),(0,0),rowspan=5)
-    ax2 = plt.subplot2grid((5,2),(0,1))
-    ax3 = plt.subplot2grid((5,2),(1,1))
-    ax4 = plt.subplot2grid((5,2),(2,1))
-    ax5 = plt.subplot2grid((5,2),(3,1))
-    ax6 = plt.subplot2grid((5,2),(4,1))
-    ## 真空室 VV ##
-    X1=[1.070 ,1.840 ,2.310 ,2.310, 1.840, 1.070, 1.070]
-    X2=[1.095, 1.815, 2.270 ,2.270 ,1.815,1.095 ,1.095]
-    Y1=[1.215, 1.215 ,0.436 ,-0.436, -1.215, -1.215 ,1.215]
-    Y2=[1.185 ,1.185 ,0.430, -0.430 ,-1.185, -1.185 ,1.185]
-    ax1.plot(X1,Y1,'lime',X2,Y2,'lime')
-    ## 欧姆线圈 E ##
-    def rect_E(r,z,w,h):
-        r1=r-w/2
-        r2=r+w/2
-        z1=z-h/2
-        z2=z+h/2
-        R=[r1,r2,r2,r1,r1,r2,r1,r2]
-        Z=[z1,z1,z2,z2,z1,z2,z2,z1]
-        ax1.plot(R,Z,'violet')
-
-    r=[0.905, 0.905, 0.905, 0.905, 0.905, 0.905, 0.9745, 1.087, 1.208, 1.725, 2.049, 2.475,
-       0.905, 0.905, 0.905, 0.905, 0.905, 0.905, 0.9745, 1.087, 1.208, 1.725, 2.049, 2.475]
-    z=[.100,  .286,  .472,  .658,  .844,  1.030,  1.236,  1.359,  1.411,  1.398,  1.172,  .3888,
-      -.100, -.286, -.472, -.658, -.844, -1.030, -1.236, -1.359, -1.411, -1.398, -1.172, -.3888]
-    w=[0.058, 0.058, 0.058, 0.058, 0.058, 0.058, 0.062, 0.062, 0.062, 0.066, 0.066, 0.066,
-       0.058, 0.058, 0.058, 0.058, 0.058, 0.058, 0.062, 0.062, 0.062, 0.066, 0.066, 0.066]
-    h=[0.145, 0.145, 0.145, 0.145, 0.145, 0.145, 0.158, 0.135, 0.112, 0.059, 0.059, 0.036,
-       0.145, 0.145, 0.145, 0.145, 0.145, 0.145, 0.158, 0.135, 0.112, 0.059, 0.059, 0.036]
-
-    for i in range(len(r)):
-        rect_E(r[i],z[i],w[i],h[i])
-    ## 极向场线圈  ##
-    def rect_E1(r,z,w,h):
-        r1=r-w/2
-        r2=r+w/2
-        z1=z-h/2
-        z2=z+h/2
-        R=[r1,r2,r2,r1,r1,r2,r1,r2]
-        Z=[z1,z1,z2,z2,z1,z2,z2,z1]
-        ax1.plot(R,Z,'c')
-    r=[1.008, 1.008, 1.008, 1.008, 1.9866, 2.345, 2.438, 2.460,
-       1.008, 1.008, 1.008, 1.008, 1.9866, 2.345, 2.438, 2.460,
-       1.008, 1.825, 2.284, 2.3841,
-       1.355, 1.5165, 1.727,
-       1.355, 1.5165, 1.727,
-       1.006, 2.380,
-       1.006, 2.380]
-
-    z=[ .055,  .340,   .450,  .560,  1.210,  .776,  .563,  .325,
-       -.055, -.340,  -.450, -.560, -1.210, -.776, -.563, -.325,
-       -.165, -1.312, -.745, -.371,
-       -.498, -.6753, -.560,
-    .498,  .6753,  .560,
-        .800, .537,
-       -.800, -.537]
-
-    w=[0.028, 0.028, 0.028, 0.028, 0.028, 0.028, 0.028, 0.079,
-       0.028, 0.028, 0.028, 0.028, 0.028, 0.028, 0.028, 0.079,
-       0.028, 0.028, 0.028, .079,
-        .0919, .1237, .0919,
-    .0919, .1237, .0919,
-        .026, .020,
-        .026, .020]
-
-    h=[0.079, 0.079, 0.079, 0.079, 0.079, 0.079, 0.079, 0.028,
-       0.079, 0.079, 0.079, 0.079, 0.079, 0.079, 0.079, 0.028,
-       0.079, 0.079, 0.079, 0.028,
-       .0919, .1237, .0919,
-       .0919, .1237, .0919,
-       .056, .025,
-       .056, .025]
-    for i in range(len(r)):
-        rect_E1(r[i],z[i],w[i],h[i])
-
-    ##偏滤器线圈挡板##
-    Xc=[1.355,1.500,1.5165,1.5165,1.727,1.53]
-    Yc=[0.498,0.735,0.6753,0.6753,0.56,0.745]
-    Rc=[0.085,0.177,0.1175,0.1175,0.085,0.185]
-
-    PX1=[1.2,1.36]
-    PY1=[0.33,0.33]
-    Phi=np.linspace(-pi/4,pi/4,10)
-    for num in Phi:
-        PX1.append(Xc[0]+Rc[0]*math.cos(num))
-        PY1.append(Yc[0]+Rc[0]*math.sin(num))
-    Phi=np.linspace(5*pi/4,3*pi/4,10)
-    for num in Phi:
-        PX1.append(Xc[1]+Rc[1]*math.cos(num))
-        PY1.append(Yc[1]+Rc[1]*math.sin(num))
-    ax1.plot(PX1,PY1,'orange')  #上偏滤器左挡板
-    ax1.plot(PX1,[i*(-1) for i in PY1],'orange')  #下偏滤器左挡板
-
-    PX2=[1.4,1.4]
-    PY2=[0.96,0.96]
-    Phi=np.linspace(pi,5*pi/4,10)
-    for num in Phi:
-        PX2.append(Xc[2]+Rc[2]*math.cos(num))
-        PY2.append(Yc[2]+Rc[2]*math.sin(num))
-
-    PX2.append(1.4915),PX2.append(1.4915)
-    PY2.append(0.5203),PY2.append(0.5203)
-    Phi=np.linspace(-pi/4,0,10)
-    for num in Phi:
-        PX2.append(Xc[3]+Rc[3]*math.cos(num))
-        PY2.append(Yc[3]+Rc[3]*math.sin(num))
-    PX2.append(1.6335),PX2.append(1.6335)
-    PY2.append(0.96),PY2.append(0.96)
-
-    
-    ax1.plot(PX2,PY2,'orange')  #上偏滤器中挡板
-    ax1.plot(PX2,[i*(-1) for i in PY2],'orange')  #下偏滤器中挡板
-
-    PX3=[1.862,1.75]
-    PY3=[0.416,0.416]
-    Phi=np.linspace(5*pi/4,3*pi/4,10)
-    for num in Phi:
-        PX3.append(Xc[4]+Rc[4]*math.cos(num))
-        PY3.append(Yc[4]+Rc[4]*math.sin(num))
-    Phi=np.linspace(-pi/4,pi/4,10)
-    for num in Phi:
-        PX3.append(Xc[5]+Rc[5]*math.cos(num))
-        PY3.append(Yc[5]+Rc[5]*math.sin(num))
-    ax1.plot(PX3,PY3,'orange')  #上偏滤器右挡板
-    ax1.plot(PX3,[i*(-1) for i in PY3],'orange')  #下偏滤器右挡板
-    
-    return fig,ax1,ax2,ax3,ax4,ax5,ax6
-    ## 初始化结束 ##
 
     
 # ----------------------------------- efit 绘图 ------------------------
@@ -852,7 +727,7 @@ def Draw_2A_stru(figsize=fig_size):
 
 ## HL-2M 装置结构初始化 ##
 # 绘制 ax1 的初始图像
-def Draw_2M_stru(figsize=fig_size):
+def Draw_2Mstru(figsize=fig_size):
     fig = plt.figure(figsize=figsize)
     fig.subplots_adjust(hspace=0.65,wspace=0.28)
     ax1 = plt.subplot2grid((5,2),(0,0),rowspan=5)
@@ -861,28 +736,59 @@ def Draw_2M_stru(figsize=fig_size):
     ax4 = plt.subplot2grid((5,2),(2,1))
     ax5 = plt.subplot2grid((5,2),(3,1))
     ax6 = plt.subplot2grid((5,2),(4,1))
+    alpha = 1
     ## 第一壁 ##
-    R_inner_p = [ 1.09,1.145,1.167,1.187,1.200,1.178]
-    Z_inner_p = [-0.802,-0.802,-0.818,-0.890,-1.030,-1.260]
-    R_dome    = [ 1.195,1.202,1.263,1.304,1.357,1.386,1.489,1.554]
-    Z_dome    = [-1.247,-1.245,-1.296,-1.327,-1.348,-1.353,-1.353,-1.353];
-    R_outer_p = [ 1.555,1.572,1.619,1.585,1.580,1.594,1.634,1.653,1.700,1.730,1.751,1.818];
-    Z_outer_p = [-1.388,-1.376,-1.377,-1.272,-1.241,-1.210,-1.152,-1.136,-1.120,-1.108,-1.108,-1.101]; 
-    ax1.plot( R_inner_p,Z_inner_p, R_dome,Z_dome, R_outer_p,Z_outer_p,'k')
+    # R_inner_p = [ 1.09,1.145,1.167,1.187,1.200,1.178]
+    # Z_inner_p = [-0.802,-0.802,-0.818,-0.890,-1.030,-1.260]
+    # R_dome    = [ 1.195,1.202,1.263,1.304,1.357,1.386,1.489,1.554]
+    # Z_dome    = [-1.247,-1.245,-1.296,-1.327,-1.348,-1.353,-1.353,-1.353];
+    # R_outer_p = [ 1.555,1.572,1.619,1.585,1.580,1.594,1.634,1.653,1.700,1.730,1.751,1.818];
+    # Z_outer_p = [-1.388,-1.376,-1.377,-1.272,-1.241,-1.210,-1.152,-1.136,-1.120,-1.108,-1.108,-1.101]; 
+    # ax1.plot( R_inner_p,Z_inner_p, R_dome,Z_dome, R_outer_p,Z_outer_p,'k')
 
-    R_inner_p = [  1.15 ,   1.237 ,  1.194 ]
-    Z_inner_p = [ 0.901 , 1.076   ,1.236 ]
-    R_dome    = [ 1.210  ,  1.397  , 1.510 ]
-    Z_dome    = [ 1.240 ,   1.185 ,  1.310]
-    R_outer_p = [ 1.522   , 1.621  , 1.855 ]
-    Z_outer_p = [ 1.324  ,  1.250 ,  1.153]
-    ax1.plot( R_inner_p,Z_inner_p, R_dome,Z_dome, R_outer_p,Z_outer_p,'k')
+    # R_inner_p = [  1.15 ,   1.237 ,  1.194 ]
+    # Z_inner_p = [ 0.901 , 1.076   ,1.236 ]
+    # R_dome    = [ 1.210  ,  1.397  , 1.510 ]
+    # Z_dome    = [ 1.240 ,   1.185 ,  1.310]
+    # R_outer_p = [ 1.522   , 1.621  , 1.855 ]
+    # Z_outer_p = [ 1.324  ,  1.250 ,  1.153]
+    # ax1.plot( R_inner_p,Z_inner_p, R_dome,Z_dome, R_outer_p,Z_outer_p,'k')
 
-    R_fwi   =   [ 1.145 ,   1.10  , 1.10  ,  1.10    , 1.15]
-    Z_fwi   =   [-0.802 , -0.800   ,0   ,   0.801 ,   0.901]
-    R_fwo   =   [ 1.855  ,1.910   ,2.050   ,2.185 ,   2.367  , 2.462  ,  2.462    ,2.367 ,  2.185  ,  1.910  , 1.855,  1.690]
-    Z_fwo   =   [ 1.153 , 1.018   ,0.889   ,0.763  ,  0.509   ,0.275  , -0.275,   -0.509,  -0.763  , -1.018 , -1.123 , -1.126];
-    ax1.plot( R_fwi,Z_fwi, R_fwo,Z_fwo,'k')
+    # R_fwi   =   [ 1.145 ,   1.10  , 1.10  ,  1.10    , 1.15]
+    # Z_fwi   =   [-0.802 , -0.800   ,0   ,   0.801 ,   0.901]
+    # R_fwo   =   [ 1.855  ,1.910   ,2.050   ,2.185 ,   2.367  , 2.462  ,  2.462    ,2.367 ,  2.185  ,  1.910  , 1.855,  1.690]
+    # Z_fwo   =   [ 1.153 , 1.018   ,0.889   ,0.763  ,  0.509   ,0.275  , -0.275,   -0.509,  -0.763  , -1.018 , -1.123 , -1.126];
+    # ax1.plot( R_fwi,Z_fwi, R_fwo,Z_fwo,'k')
+
+    R_fw_up   =   [ 1.9666 , 1.7612 , 1.6937,  1.6928  , 1.6252 ,   1.6243  ,  1.5568 ,   1.5559 ,   1.4872  ,  1.4862  ,  1.4106 ,   1.4096  ,  1.3334 ,
+                    1.3325 , 1.2641 , 1.2634 , 1.2103 ,  1.2099  ,  1.1779   , 1.1778  ,  1.1700   , 1.1700  ,  1.1700  ,  1.1700  ,  1.1700  ,   1.1700  ,  1.1700  ,  1.0950 ,  ]
+    Z_fw_up   =   [ 0.9697  ,1.0832 , 1.1201 , 1.1206  , 1.1575  ,  1.1580   , 1.1949 ,   1.1953   , 1.2302  ,  1.2303  ,  1.2449  ,  1.2448  ,  1.2338  ,
+                    1.2334 , 1.1981  ,1.1973 , 1.1416  , 1.1407  ,  1.0706 ,   1.0696   , 0.9930   , 0.9920  ,  0.9150  ,  0.9140  ,  0.8370  ,  0.8350  ,  0.8100  ,  0.810 ]
+    ax1.plot(R_fw_up,Z_fw_up,'k',alpha=alpha,zorder=2)
+    R_fwi   =   [ 1.145  ,  1.105  , 1.105  ,  1.105  ]
+    Z_fwi   =   [-0.802,   -0.800  ,   0    ,  0.800  ]
+    ax1.plot(R_fwi,Z_fwi,'k',alpha=alpha,zorder=2)
+    R_fwo = [ 1.91   , 1.9666  ,  2.0809  ,  2.0818 ,   2.1523  ,  2.1530 ,   2.2345   , 2.2351  ,  2.2973    ,2.2978  ,  2.3605   , 2.3609  ,  2.4012 ,
+        2.4015  ,  2.4417  ,  2.4423  ,  2.4847  ,  2.4850 ,   2.4850   , 2.4850  ,  2.4850  ,  2.4850  ,  2.4850  ,  2.4847  ,  2.4423  ,
+        2.4417  , 2.4015  ,  2.4012,    2.3609  ,  2.3605 ,   2.2978   , 2.2973  ,  2.2351  ,  2.2345   , 2.1530   , 2.1523  ,  2.0818  ,  2.0809  ,  1.9666   
+        ]
+    Z_fwo = [ -1.01 ,  -0.9697  , -0.9089 ,  -0.9083 ,  -0.8541  , -0.8534 ,  -0.7521  , -0.7513 ,  -0.6383  , -0.6374 ,  -0.5236 ,   -0.5227  , -0.3991  , 
+        -0.3981 , -0.2750  , -0.2730 ,  -0.1429 ,  -0.1413 ,  -0.0540 ,  -0.0530   , 0.0530  ,  0.0540  ,  0.1413 ,   0.1429  ,  0.2730 ,   
+        0.2750 ,   0.3981  ,  0.3991 ,   0.5227  ,  0.5236 ,   0.6374  ,  0.6383  ,  0.7513   , 0.7521 ,   0.8534  ,  0.8541  ,  0.9083 ,   0.9089,   0.9697 ]
+    ax1.plot(R_fwo,Z_fwo,'k',alpha=alpha,zorder=2)
+    R_inner_p_new = [ 1.098  ,  1.145  , 1.1666 ,  1.2066 ,  1.2099,   1.1783    ]
+    Z_inner_p_new = [ -0.802 , -0.802 , -0.8145  ,-0.8837  ,-0.8984 ,  -1.259  ]
+    ax1.plot(R_inner_p_new,Z_inner_p_new,'k',alpha=alpha,zorder=2)
+    R_dome_new    = [ 1.1947 , 1.2019  ,  1.2871   , 1.302  , 1.3579  ,1.3729 , 1.3886 , 1.5536 , 1.5559  ]
+    Z_dome_new    = [-1.2468 ,-1.2447 ,  -1.317 ,  -1.326  , -1.3477,-1.352 , -1.3535 , -1.3535  ,-1.3615 ]
+    ax1.plot(R_dome_new,Z_dome_new,'k',alpha=alpha,zorder=2)
+    R_outer_p_new = [ 1.5546 ,  1.5714 , 1.6134 ,  1.6168  , 1.584  ,  1.581  ,  1.590, 1.6225  , 1.6355 ,   1.6528  , 1.7234  , 1.91]
+    Z_outer_p_new = [-1.3845 , -1.3765 ,-1.3765 , -1.3709 , -1.2701 , -1.2398, -1.2156, -1.1647 , -1.1488  , -1.1364  ,-1.0989 , -1.01]
+    ax1.plot(R_outer_p_new,Z_outer_p_new,'k',alpha=alpha,zorder=2)
+
+
+
+
     ## 真空室 VV ##
     base=os.path.dirname(os.path.realpath(__file__))
     # base = get_sw_path_info()
@@ -944,8 +850,8 @@ def Draw_2M_stru(figsize=fig_size):
             r2=r+w/2
             z1=z-h/2
             z2=z+h/2
-            R=[r1,r2,r2,r1,r1,r2,r1,r2]
-            Z=[z1,z1,z2,z2,z1,z2,z2,z1]
+            R=[r1,r2,r2,r1]   # R=[r1,r2,r2,r1,r1,r2,r1,r2]   
+            Z=[z1,z1,z2,z2]   # Z=[z1,z1,z2,z2,z1,z2,z2,z1]
             ax1.plot(R,Z,'#fff4fc')
             ax1.fill(R,Z,facecolor="#fbb3b3")
     r=[0.748,0.748]
@@ -962,8 +868,8 @@ def Draw_2M_stru(figsize=fig_size):
             z1=z-h/2
             z2=z+h/2
 
-            R=[r1,r2,r2,r1,r1,r2,r1,r2]
-            Z=[z1,z1,z2,z2,z1,z2,z2,z1]
+            R=[r1,r2,r2,r1]   # R=[r1,r2,r2,r1,r1,r2,r1,r2]
+            Z=[z1,z1,z2,z2]   # Z=[z1,z1,z2,z2,z1,z2,z2,z1]
         else:
             r1=r-(w/2+h/2/math.tan(a))
             r2=r+(w/2-h/2/math.tan(a))
@@ -972,8 +878,8 @@ def Draw_2M_stru(figsize=fig_size):
 
             z1=z-h/2
             z2=z+h/2
-            R=[r1,r2,r3,r4,r1,r3,r4,r2]
-            Z=[z1,z1,z2,z2,z1,z2,z2,z1]
+            R=[r1,r2,r3,r4] # R=[r1,r2,r3,r4,r1,r3,r4,r2]
+            Z=[z1,z1,z2,z2] # Z=[z1,z1,z2,z2,z1,z2,z2,z1]
         ax1.plot(R,Z,'#fff4fc')
         ax1.fill(R,Z,facecolor="#fbb3b3")
     r=[0.912,0.912,0.912,0.912,1.092,1.501,2.500,2.760,0.912,0.912,0.912,0.912,1.092,1.501,2.500,2.760]
@@ -1027,11 +933,19 @@ def draw_psi_fig(ax1,gfile_data,struct,lab):
     # ax1.contour(GridR,GridZ,psirzp,np.linspace(0.96,0.99,contour_num),colors='#d82d2d',linewidths=0.8)# 1
     # ax1.contour(GridR, GridZ, psirzp,[1.1], colors='blue', linewidths=0.8)
     
-    ax1.contour(GridR,GridZ,psirzp,np.linspace(0,0.0009,contour_num*2),colors='#126363',linewidths=1)# 2
-    ax1.contour(GridR,GridZ,psirzp,np.linspace(0.05,0.95,contour_num*4),colors='#126363',linewidths=0.8)# 4
-    B=ax1.contour(GridR,GridZ,psirzp,[1],colors='red',linewidths=1.5)# [1]
-    ax1.contour(GridR,GridZ,psirzp,np.linspace(0.96,0.99,contour_num),colors='#126363',linewidths=0.8)# 1
-    ax1.contour(GridR, GridZ, psirzp,[1.1], colors='red', linewidths=0.8)
+    # ax1.contour(GridR,GridZ,psirzp,np.linspace(0,0.0009,contour_num*2),colors='#126363',linewidths=1)# 2
+    # ax1.contour(GridR,GridZ,psirzp,np.linspace(0.05,0.95,contour_num*4),colors='#126363',linewidths=0.8)# 4
+    # B=ax1.contour(GridR,GridZ,psirzp,[1],colors='red',linewidths=1.5)# [1]
+    # ax1.contour(GridR,GridZ,psirzp,np.linspace(0.96,0.99,contour_num),colors='#126363',linewidths=0.8)# 1
+    # ax1.contour(GridR, GridZ, psirzp,[1.1], colors='red', linewidths=0.8)
+
+    ax1.contour(GridR,GridZ,psirzp,np.linspace(0,0.0009,contour_num*2),colors='red',linewidths=1.2)# 2中心
+    ax1.contour(GridR,GridZ,psirzp,np.linspace(0.05,0.95,contour_num*2),colors='#126363',linewidths=1)# 4内围
+    B = ax1.contour(GridR,GridZ,psirzp,[1],colors='#126363',linewidths=1.5)# [1]
+    ax1.contour(GridR,GridZ,psirzp,np.linspace(1.1,5,contour_num*4),colors='#126363',linewidths=1.2,alpha=0.6,zorder=1.1)# 1外围
+    ax1.contour(GridR, GridZ, psirzp,[1], colors='red', linewidths=1)# 分割
+
+
 
     v = B.collections[0].get_paths()[0].vertices 
     # 列坐标 列表
@@ -1076,14 +990,15 @@ def draw_prof(ax2,ax3,ax4,ax5,ax6,gfile_data,col):
     # y_major_locator=plt.MultipleLocator(4)
     # ax4.yaxis.set_major_locator(y_major_locator)
     
-    ax5.plot(gfile_data['rhovn'],gfile_data['ffprim'],col)
-    ax5.set_ylabel('ff\'', fontsize=10)
-    # y_major_locator=plt.MultipleLocator(2)
-    # ax3.yaxis.set_major_locator(y_major_locator)
-    
-    ax6.plot(gfile_data['rhovn'],gfile_data['pprime'],col)
-    ax6.set_ylabel('p\'', fontsize=10)
-    ax6.set_xlabel('rhovn', fontsize=10) 
+    if len(gfile_data['rhovn'])!=0:
+        ax5.plot(gfile_data['rhovn'],gfile_data['ffprim'],col)
+        ax5.set_ylabel('ff\'', fontsize=10)
+        # y_major_locator=plt.MultipleLocator(2)
+        # ax3.yaxis.set_major_locator(y_major_locator)
+        
+        ax6.plot(gfile_data['rhovn'],gfile_data['pprime'],col)
+        ax6.set_ylabel('p\'', fontsize=10)
+        ax6.set_xlabel('rhovn', fontsize=10) 
 
 
 # gfile 为数据源 绘制 ax1 叠加图的 单个图
@@ -1237,8 +1152,9 @@ def draw_wave_form(afile_data_list,parameter_list,connect_type):
     return(fig)
  
 def read_a(afile_path):
-    info = get_sw_path_info()
-    sw_framework_root = info['sw_framework_root']
+    
+    base=os.path.dirname(os.path.realpath(__file__))
+    sw_framework_root = os.path.abspath(base+"/../../")
     if not sw_framework_root in sys.path:
         sys.path.append(sw_framework_root)
         
@@ -1256,8 +1172,8 @@ def read_a(afile_path):
 
 
 def read_g_and_extra(gfile_path):
-    info = get_sw_path_info()
-    sw_framework_root = info['sw_framework_root']
+    base=os.path.dirname(os.path.realpath(__file__))
+    sw_framework_root = os.path.abspath(base+"/../../")
     if not sw_framework_root in sys.path:
         sys.path.append(sw_framework_root)
         
@@ -1323,8 +1239,8 @@ def read_g_extra(gfile_path,nw,gfile_data):
 
 # 读取单个Gfile
 def read_g(gfile_path):
-    info = get_sw_path_info()
-    sw_framework_root = info['sw_framework_root']
+    base=os.path.dirname(os.path.realpath(__file__))
+    sw_framework_root = os.path.abspath(base+"/../../")
     if not sw_framework_root in sys.path:
         sys.path.append(sw_framework_root)
         
@@ -1343,7 +1259,7 @@ def read_g(gfile_path):
     current = gfile_data["current"]
     pprime = gfile_data["pprime"]
     ffprime = gfile_data["ffprime"]
-
+    
     gfile_data["rgefit"] = np.linspace(rleft,rleft+rdim,nw)
     gfile_data["zgefit"] = np.linspace(zmid-zdim/2,zmid+zdim/2,nw)
     gfile_data["psirz"] = np.mat(gfile_data["psirz"]).reshape(gfile_data["nw"],gfile_data["nh"])
@@ -1356,10 +1272,16 @@ def read_g(gfile_path):
     return gfile_data
 
 def ids_read_g(user,db,shot,run,time):
-    info = get_sw_path_info()
-    sw_framework_root = info['sw_framework_root']
+    base=os.path.dirname(os.path.realpath(__file__))
+    sw_framework_root = os.path.abspath(base+"/../../")
     if not sw_framework_root in sys.path:
         sys.path.append(sw_framework_root)
+        
+    # info = get_sw_path_info()
+    # sw_framework_root = info['sw_framework_root']
+    # if not sw_framework_root in sys.path:
+    #     sys.path.append(sw_framework_root)
+    # from data_parser import ParserFactory,SWMapper,NetcdfParser
         
     from data_parser import ParserFactory,SWMapper
     shot = str(shot)
@@ -1375,12 +1297,17 @@ def ids_read_g(user,db,shot,run,time):
     gfile_mapper.updateMapperYAMLFile(gfile_yaml_path)
     gfile_tree = gfile_mapper.ids_reflect_mapping(db,int(shot),int(run),int(time))
     gfile_data = gfile_tree.toDict()
+    
 
     data_entry = imas.DBEntry(imas.imasdef.MDSPLUS_BACKEND,db,int(shot),int(run),str(user))
 
     data_entry.open()
     equilibrium = data_entry.get('equilibrium')
     c_str = equilibrium.ids_properties.comment
+    
+    time_list = list(equilibrium.time)
+    index = time_list.index(int(time)/1000.0)
+    # print(index)
     
     bcentr,areao,simagx,taumhd,betapd,betatd,wplasmd,fluxx,nsilop0,magpri0,nw,nh,nbbbs,limitr = c_str.split(",")[:14]
     gfile_data["shot"] = shot
@@ -1396,35 +1323,52 @@ def ids_read_g(user,db,shot,run,time):
     nbbbs = int(gfile_data["nbbbs"])
     limitr = int(gfile_data["limitr"])
     
-    rleft = gfile_data["rleft"]
-    rdim = gfile_data["rdim"]
-    zmid = gfile_data["zmid"]
-    zdim = gfile_data["zdim"]
-    current = gfile_data["current"]
-    pprime = gfile_data["pprime"]
+    rleft = equilibrium.time_slice[index].boundary.b_flux_pol_norm
+    rdim = equilibrium.grids_ggd[index].grid[0].space[0].objects_per_dimension[0].object[0].measure
 
-    ffprime = gfile_data["ffprime"]
+    zmid = equilibrium.time_slice[index].boundary.geometric_axis.z
+    zdim = equilibrium.time_slice[index].boundary.psi
+
+    current = equilibrium.time_slice[index].global_quantities.ip
+    pprime = equilibrium.time_slice[index].profiles_1d.dpressure_dpsi
+    ffprime = equilibrium.time_slice[index].profiles_1d.f_df_dpsi
+    
+
+    
+    
+
+
+
+
 
     gfile_data["rgefit"] = np.linspace(rleft,rleft+rdim,nw)
     gfile_data["zgefit"] = np.linspace(zmid-zdim/2,zmid+zdim/2,nw)
+
+    
     gfile_data["psirz"] = np.mat(gfile_data["psirz"]).reshape(nw,nh)
+
+
+
+
+
     gfile_data["ssimag"] = gfile_data["simag"]
     gfile_data["ssibry"] = gfile_data["sibry"]
     gfile_data["ffprim"] = [-np.sign(current)*ffprime[i]  for i in range(nw)]
     gfile_data["pprime"] = [-np.sign(current)*pprime[i] / 100000 for i in range(nw)]
-    gfile_data["rhovn"] = equilibrium.time_slice[0].profiles_1d.j_parallel
-    gfile_data["Pprof"] = equilibrium.time_slice[0].profiles_1d.magnetic_shear
-    gfile_data["R_Pprof"] = equilibrium.time_slice[0].profiles_1d.r_inboard
-    gfile_data["qprof"] = equilibrium.time_slice[0].profiles_1d.r_outboard
-    gfile_data["R_qprof"] = equilibrium.time_slice[0].profiles_1d.rho_tor_norm
-    gfile_data["R_Jprof"] = equilibrium.time_slice[0].profiles_1d.rho_tor
-    gfile_data["Jprof_mid"] = equilibrium.time_slice[0].profiles_1d.j_tor
-        
+    gfile_data["rhovn"] = equilibrium.time_slice[index].profiles_1d.j_parallel
+    gfile_data["Pprof"] = equilibrium.time_slice[index].profiles_1d.magnetic_shear
+    gfile_data["R_Pprof"] = equilibrium.time_slice[index].profiles_1d.r_inboard
+    gfile_data["qprof"] = equilibrium.time_slice[index].profiles_1d.r_outboard
+    gfile_data["R_qprof"] = equilibrium.time_slice[index].profiles_1d.rho_tor_norm
+    gfile_data["R_Jprof"] = equilibrium.time_slice[index].profiles_1d.rho_tor
+    gfile_data["Jprof_mid"] = equilibrium.time_slice[index].profiles_1d.j_tor
+    
+    
     return gfile_data
 
 def ids_read_a(user,db,shot,run,time):
-    info = get_sw_path_info()
-    sw_framework_root = info['sw_framework_root']
+    base=os.path.dirname(os.path.realpath(__file__))
+    sw_framework_root = os.path.abspath(base+"/../../")
     if not sw_framework_root in sys.path:
         sys.path.append(sw_framework_root)
         
@@ -1435,6 +1379,7 @@ def ids_read_a(user,db,shot,run,time):
     afile_mapper = SWMapper()
     afile_yaml_path = sw_framework_root+"/mappers/afile_ids_mapper.yaml"
     afile_mapper.updateMapperYAMLFile(afile_yaml_path)
+  
     afile_tree = afile_mapper.ids_reflect_mapping(db,int(shot),int(run),int(time))
     afile_data = afile_tree.toDict()
     
@@ -1650,8 +1595,8 @@ class IMASPathParser:
 # -----------------------------------OneTwo绘图---------------------------------------
 
 def read_file(file_path,gfile_path):
-    info = get_sw_path_info()
-    sw_framework_root = info['sw_framework_root']
+    base=os.path.dirname(os.path.realpath(__file__))
+    sw_framework_root = os.path.abspath(base+"/../../")
     if not sw_framework_root in sys.path:
         sys.path.append(sw_framework_root)
     from data_parser import ParserFactory,SWMapper,NetcdfParser
@@ -1678,20 +1623,24 @@ def read_ids(user,db,shot,run,time):
     data_entry = imas.DBEntry(imas.imasdef.MDSPLUS_BACKEND,db,int(shot),int(run),str(user))
     data_entry.open()
     core_profiles = data_entry.get('core_profiles')
-    data_entry2 = imas.DBEntry(imas.imasdef.MDSPLUS_BACKEND,db,int(shot),int(run)-1,str(user))
-    data_entry2.open()
-    equilibrium = data_entry2.get("equilibrium")
+    # data_entry2 = imas.DBEntry(imas.imasdef.MDSPLUS_BACKEND,db,int(shot),int(run)-1,str(user))
+    # data_entry2.open()
+    # equilibrium = data_entry2.get("equilibrium")
+    equilibrium = data_entry.get("equilibrium")
+    
+    time_list = list(equilibrium.time)
+    index = time_list.index(time/1000.0)
 
-    curden = core_profiles.profiles_1d[0].j_total[:]
-    curboot = core_profiles.profiles_1d[0].j_bootstrap[:]
-    curohm = core_profiles.profiles_1d[0].j_ohmic[:]
-    rhovn = equilibrium.time_slice[0].profiles_1d.j_parallel[:]
-    press = equilibrium.time_slice[0].profiles_1d.pressure[:]
-    q_value = equilibrium.time_slice[0].profiles_1d.q[:]
-    qpsi = equilibrium.time_slice[0].profiles_1d.q[:]
-    currf = core_profiles.profiles_1d[0].conductivity_parallel[:]
-    curbeam = core_profiles.profiles_1d[0].current_parallel_inside[:]
-    rho_grid = core_profiles.profiles_1d[0].phi_potential[:]
+    curden = core_profiles.profiles_1d[index].j_total[:]
+    curboot = core_profiles.profiles_1d[index].j_bootstrap[:]
+    curohm = core_profiles.profiles_1d[index].j_ohmic[:]
+    rhovn = equilibrium.time_slice[index].profiles_1d.j_parallel[:]
+    press = equilibrium.time_slice[index].profiles_1d.pressure[:]
+    q_value = equilibrium.time_slice[index].profiles_1d.q[:]
+    qpsi = equilibrium.time_slice[index].profiles_1d.q[:]
+    currf = core_profiles.profiles_1d[index].conductivity_parallel[:]
+    curbeam = core_profiles.profiles_1d[index].current_parallel_inside[:]
+    rho_grid = core_profiles.profiles_1d[index].phi_potential[:]
     
     data = {}
     
@@ -2272,22 +2221,23 @@ def get_ids():
     )
     data_entry.open()
     mhd_linear = data_entry.get("mhd_linear")
-
+    time_list = list(mhd_linear.time)
+    index = time_list.index(int(time)/1000.0)
     # data_entry.close()
-    return mhd_linear, int(time)
+    return mhd_linear, index
 
 
 def get_meshrz_ev(file: h5py.File):
     is_ids = Var.is_ids
     if is_ids:
-        mhd_linear, time = get_ids()
+        mhd_linear, index = get_ids()
         r = np.array(
-            mhd_linear.time_slice[0]
+            mhd_linear.time_slice[index]
             .toroidal_mode[0]
             .vacuum.a_field_perturbed.coordinate3.imaginary
         )
         z = np.array(
-            mhd_linear.time_slice[0]
+            mhd_linear.time_slice[index]
             .toroidal_mode[0]
             .vacuum.a_field_perturbed.coordinate2.imaginary
         )
@@ -2302,9 +2252,9 @@ def get_meshrz_ev(file: h5py.File):
 def get_s(file: h5py.File):
     is_ids = Var.is_ids
     if is_ids:
-        mhd_linear, time = get_ids()
+        mhd_linear, index = get_ids()
         f = np.array(
-            mhd_linear.time_slice[0]
+            mhd_linear.time_slice[index]
             .toroidal_mode[0]
             .plasma.phi_potential_perturbed.imaginary[::]
         )
@@ -2319,32 +2269,32 @@ def get_s(file: h5py.File):
 def get_profile_s(file: h5py.File, name: str):
     is_ids = Var.is_ids
     if is_ids:
-        mhd_linear, time = get_ids()
+        mhd_linear, index = get_ids()
         if name == "q":
             f = np.array(
-                mhd_linear.time_slice[0].toroidal_mode[0].plasma.coordinate_system.z[::]
+                mhd_linear.time_slice[index].toroidal_mode[0].plasma.coordinate_system.z[::]
             )
         elif name == "f":
             f = np.array(
-                mhd_linear.time_slice[0]
+                mhd_linear.time_slice[index]
                 .toroidal_mode[0]
                 .plasma.coordinate_system.jacobian[::]
             )
         elif name == "p":
             f = np.array(
-                mhd_linear.time_slice[0]
+                mhd_linear.time_slice[index]
                 .toroidal_mode[0]
                 .plasma.psi_potential_perturbed.real[::]
             )
         elif name == "ffp":
             f = np.array(
-                mhd_linear.time_slice[0]
+                mhd_linear.time_slice[index]
                 .toroidal_mode[0]
                 .plasma.psi_potential_perturbed.imaginary[::]
             )
         elif name == "pp":
             f = np.array(
-                mhd_linear.time_slice[0]
+                mhd_linear.time_slice[index]
                 .toroidal_mode[0]
                 .plasma.phi_potential_perturbed.real[::]
             )
@@ -2361,37 +2311,37 @@ def get_profile_s(file: h5py.File, name: str):
 def get_profile_s_eq(file: h5py.File, name: str):
     is_ids = Var.is_ids
     if is_ids:
-        mhd_linear, _ = get_ids()
+        mhd_linear, index = get_ids()
         s = np.array(
             mhd_linear.time_slice[0].toroidal_mode[0].plasma.pressure_perturbed.real
         )
         if name == "q":
             f = np.array(
-                mhd_linear.time_slice[0]
+                mhd_linear.time_slice[index]
                 .toroidal_mode[0]
                 .plasma.temperature_perturbed.imaginary
             )
         elif name == "f":
             f = np.array(
-                mhd_linear.time_slice[0]
+                mhd_linear.time_slice[index]
                 .toroidal_mode[0]
                 .plasma.pressure_perturbed.imaginary
             )
         elif name == "p":
             f = np.array(
-                mhd_linear.time_slice[0]
+                mhd_linear.time_slice[index]
                 .toroidal_mode[0]
                 .vacuum.a_field_perturbed.coordinate1.real
             )
         elif name == "ffp":
             f = np.array(
-                mhd_linear.time_slice[0]
+                mhd_linear.time_slice[index]
                 .toroidal_mode[0]
                 .vacuum.a_field_perturbed.coordinate1.imaginary
             )
         elif name == "pp":
             f = np.array(
-                mhd_linear.time_slice[0]
+                mhd_linear.time_slice[index]
                 .toroidal_mode[0]
                 .plasma.temperature_perturbed.real
             )
@@ -2408,28 +2358,28 @@ def get_profile_s_eq(file: h5py.File, name: str):
 def get_ef(file: h5py.File, name: str):
     is_ids = Var.is_ids
     if is_ids:
-        mhd_linear, time = get_ids()
+        mhd_linear, index = get_ids()
         if name == "xi01r":
             f = np.array(
-                mhd_linear.time_slice[0]
+                mhd_linear.time_slice[index]
                 .toroidal_mode[0]
                 .plasma.displacement_perpendicular.real[::]
             )
         elif name == "xi01i":
             f = np.array(
-                mhd_linear.time_slice[0]
+                mhd_linear.time_slice[index]
                 .toroidal_mode[0]
                 .plasma.displacement_perpendicular.imaginary[::]
             )
         elif name == "xi03r":
             f = np.array(
-                mhd_linear.time_slice[0]
+                mhd_linear.time_slice[index]
                 .toroidal_mode[0]
                 .plasma.displacement_parallel.real[::]
             )
         elif name == "xi03i":
             f = np.array(
-                mhd_linear.time_slice[0]
+                mhd_linear.time_slice[index]
                 .toroidal_mode[0]
                 .plasma.displacement_parallel.imaginary[::]
             )
@@ -2451,9 +2401,9 @@ def get_ef_fft2(file: h5py.File, name: str, nmax: int):
     npsi = np.shape(fr)[0]
     nchi = np.shape(fi)[1]
     if is_ids:
-        mhd_linear, time = get_ids()
+        mhd_linear, index = get_ids()
         s = np.array(
-            mhd_linear.time_slice[0]
+            mhd_linear.time_slice[index]
             .toroidal_mode[0]
             .vacuum.a_field_perturbed.coordinate2.real[:, 0]
         )
@@ -2489,8 +2439,9 @@ def get_ef_rzp(file: h5py.File, name: str, phi: float):
     name1 = name + "i"
     fi = get_ef(file, name1)
     if is_ids:
-        mhd_linear, time = get_ids()
-        ntor = mhd_linear.time_slice[0].toroidal_mode[0].plasma.coordinate_system.r[0]
+        mhd_linear, index = get_ids()
+        ntor = mhd_linear.time_slice[index].toroidal_mode[0].plasma.coordinate_system.r[0]
+        # print(ntor)
     else:
         ntor = file.get("/eigen/ntor")[0]
     f = 2 * (fr * math.cos(ntor * phi) - fi * math.sin(ntor * phi))
@@ -2584,3 +2535,18 @@ def read_R_Z():
     R_Z["R_outer2"] = R_outer
     R_Z["Z_outer2"] = Z_outer
     return R_Z
+
+
+
+# json解析
+class MyEncoder(json.JSONEncoder):
+
+    def default(self, obj):
+        """
+        判断是否为bytes类型的数据是的话转换成str
+        :param obj:
+        :return:
+        """
+        if isinstance(obj, bytes):
+            return str(obj, encoding='utf-8')
+        return json.JSONEncoder.default(self, obj)

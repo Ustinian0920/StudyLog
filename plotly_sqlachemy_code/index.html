@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Plotly嵌入Flask可视化作图案例</title>
+    <style type="text/css">
+    	div.content {padding: 1em 5em;}
+    	div.graph {margin: 10px auto;
+    		       width: 80%;}
+    </style>
+   <!--导入在线js库文件-->
+   <script type="text/javascript" src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+   <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+</head>
+<body>
+<div class='content'>
+	<div><input  type="file" id="files"></div>
+	<h2>用Python和plotly结合flask可视化作图</h2>
+	<div>
+		
+	</div>
+	
+    <div class='graph' id='myDiv' width="500px" >
+    <!--展现可视化图标部分-->
+    <script>
+		var inputElement = document.getElementById("files");
+		inputElement.addEventListener("change", handleFiles, false);
+		function handleFiles() {
+			var selectedFile = document.getElementById("files").files[0];//获取读取的File对象
+			var name = selectedFile.name;//读取选中文件的文件名
+			var size = selectedFile.size;//读取选中文件的大小
+			console.log("文件名:"+name+"大小："+size);
+			var reader = new FileReader();//这里是核心！！！读取操作就是由它完成的。
+			reader.readAsText(selectedFile);//读取文件的内容
+	
+			reader.onload = function(){
+				console.log("读取结果：", this.result);//当读取完成之后会回调这个函数，然后此时文件的内容存储到了result中。直接操作即可。
+	
+				console.log("读取结果转为JSON：");
+				let json = JSON.parse(this.result);
+				Plotly.newPlot('myDiv', json);
+				console.log(json.name);
+				console.log(json.age);
+			};
+	
+		}
+	
+		
+		
+
+    	// var obj = JSON.parse(bars.then(res => res.json()));
+    </script>
+
+
+   </div>
+	<div>
+    	<p>从图上可以看出，文字部分，可自定义设置
+		</p>
+	</div>
+</div>
+</body>
+</html>

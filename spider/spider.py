@@ -16,7 +16,7 @@ def get_base_info(soup:BeautifulSoup):
 
     return result
 
-
+ 
 # 获取配置信息
 def get_config_info(soup:BeautifulSoup,dic:dict):
 

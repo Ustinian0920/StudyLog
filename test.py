@@ -1,9 +1,7 @@
-a = ["1","2"]
+import numpy as np
 
-b = ",".join(a)
+a = np.array([1, 2, 3])
+a = a + 1
+print(a)
 
-
-a = (x*2 for x in range(5))
-
-print(a.__next__())
-print(a.__next__())
+l = [{'mate_arr': [2, 2, 4, 6], 'index': 2, 'mate_range': (2, 6), 'd': 1.0}]
